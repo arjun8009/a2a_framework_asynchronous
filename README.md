@@ -22,6 +22,23 @@ The Aim of this library is :
 * The presence of abstraction helps developers to focus only on the domain specific nature of the problem, and the overall idea of the architecture rather than coding the architecture itself.
 * The library intentionally does not employ LLM's to write user tools and prompts itself to give users better control and more involvement in the development process.
 
+## Installation
+
+* This project uses Redis https://redis.io/tutorials/what-is-redis/ to set up the Queue and to handle tasks among multiple workers. The easier way to set up redis is to use docker 
+* Download docker desktop using https://www.docker.com/products/docker-desktop/
+* Get the redis container using docker desktop 
+```bash 
+docker pull redis:latest
+```
+* Finally run the image of redis:latest
+* To install the library :  
+  * clone the repo
+  * cd a2a_framework_asynchronous
+  * pip install .
+* Now all the required packages and software can be used.
+  
+
+
 ## Get Started
 
 Given an idea of a multi-agentic platform the following steps can be followed to use the library
@@ -36,7 +53,7 @@ Given an idea of a multi-agentic platform the following steps can be followed to
 
 This library supports two types of agentic architectures :
 * **Agentic** : This type of architecture gives autonomy to the agents. So given a problem, different agents communicate and assign tasks to other agents to solve a problem.
-* **Deterministic** : This type of architecture involves a controlled information flow between different agents as pre-planned by the user (Agent 1 -> Agent 2 ... Agent N).
+* **Deterministic** : This type of architecture involves a controlled information flow between different agents as pre-planned by the user (Agent 1 -> Agent 2 ... Agent N). Currently single branch sequential, multibranch and single branch with conditions are implemented
 * **Hybrid** : A combination of both
 
 ### Example JSON
@@ -92,9 +109,18 @@ This library supports two types of agentic architectures :
 ```python
 from a2a_framework.utils.run_architecture import run_architecture,run_human_reply
 from a2a_framework.utils.initialise import initialize
+from a2a_framework.a2a.redis_client import redis_client
 
 logger_path = initialize(r"<JSON_PATH>","<LOG_FILE_NAME>","<OUTPUT_DIR>", 1,
            "<virtual environment path>")
+
+# To clear all memory
+redis_client.flush_db()
 ```
 
+### Detailed Docs
+For detailed docs please refer to examples/docs 
 
+### Upcoming updates
+* Memory compression methods : summarization and pruning
+* user defined memory compression methods
