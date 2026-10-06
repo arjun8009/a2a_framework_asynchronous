@@ -1,0 +1,8 @@
+HISTORY PROBLEM WITH MULTIPLE CALLS WITH THE SAME AGENT
+
+Messages use filters to handle edge cases where A1->A2 with 2 or more tasks (T1...Tn)
+Hence we use filter_messages. If A1 keeps on calling A2 multiple times with every turn then it will be only shown the filtered Messages and not the whole history. 
+A clear filters need to be made that will clear all filters after the turn is over.
+
+
+DYNAMIC FUNTION TO BE PROVIDED AS INPUT FOR FINAL RESULT

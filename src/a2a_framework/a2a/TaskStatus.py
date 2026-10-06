@@ -1,0 +1,9 @@
+from enum import Enum
+
+class TaskStatus(str,Enum):
+    PENDING ="PENDING"
+    RUNNING = "RUNNING"
+    WAITING_ON_CHILDREN = "WAITING ON CHILDREN"
+    DONE = "DONE"
+    FAILED = "FAILED"
+    WAITING_ON_HUMAN = "WAITING ON HUMAN"
