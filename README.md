@@ -1,91 +1,100 @@
-### Agentic Communication Library
+## Agentic Communication Library : Version 0.0.1
 
-This is an open source library for Agent creation and Task creation. Below are its uses and advantages
+This is a python library that helps any user create an agentic system with minimum effort and without focusing on the intricasies of creating llm instances, handling tool calls, 
+managing messages and llm states and routing information between different agents.
 
-* This system can create and instantiate a multi-agentic platform given a set of tools, prompts and agent ideas.
-* The user needs to create an idea of an application and a multi-agentic architecture
-* The user would need to design a set of prompts and tools that the agents can use
-* Finally the user would just need to provide a json file containing the name of the prompts, tools and agent specifications
+User provide  :
 
-### Working Principle
+* A basic blueprint of their desired agentic architecture by filling up a json template
+* A set of prompts that indicate the behaviour of the agents
+* **OPTIONAL** : A set of tools that the agent may use, like access to specific databases or models or processing functions
+* **OPTIONAL** : A set of schemas that the user may want the agents to use
 
-This library uses a task execution lifecycle. Every agent interation between different agents and tools are designed as a Task
-A task has the following lifecycle states
+Using this information and the blueprint template the agentic communication library :
 
-* Pending
-* Running
-* Done
-* Failed
-* Waiting on Children
-* Waiting on Human
+* Compiles the prompts and the tools 
+* Parses the blueprint
+* Intitialises agents with required context
+* Returns an endpoint that the users can use to run their architecture
 
-At any point a task executing a tool can be in one of the above 6 states. This tool supports asynchronous execution using Redis so a worker takes on the job when the main process encounters a long task.
+The Aim of this library is :
+* To help developers make complex multi-agent architectures without learning the syntax of the of various different agentic SDLC packages which require understanding the working of the library to use it.
+* The presence of abstraction helps developers to focus only on the domain specific nature of the problem, and the overall idea of the architecture rather than coding the architecture itself.
+* The library intentionally does not employ LLM's to write user tools and prompts itself to give users better control and more involvement in the development process.
 
-### Example Trajectories
-User : perform Task A
+## Get Started
 
-Task (T0 : root task) -> send_message(human, A1) -> run(A1) -> Task (T1 : Child Task,  Parent : T0) -> send_message(A1, A2) -> run(A2) -> Task (T2 : Child Task, Parent: T1) -> tool
-      1.  Pending                                               Pending                                                                    Pending
-      2.  Running                                               Running                                                                    Running
-      3.  Waiting on Child                                      Waiting on Child                                                           Done
-      4.  Child T1 Notified parent Running                      child T2 notified parent : Running                                         notify_parent()
-      5.  Done                                                  Done
-      6.  notify_human()                                        notify_parent()
+Given an idea of a multi-agentic platform the following steps can be followed to use the library
 
-### usage 
+* Decide on the type of architecture : Will it be a free flow system where agents decide which agents to communicate or a strict information flow system where agents are executed in a predefined manner.
 
-* create a filename for prompts (needs to be a .py file) with variable assigned to prompt for each agent.
-* create a filename for tools (needs to be a .py file).
-* create a tool definitions files (needs to be a .py) file with OpenAI style tool definitions.
-* Create some cards for the agents in a .py file refer to a2a.AgentCard. These help for better agent communication.
+* Write the prompts and the tools that will provide agents with their behaviour and utitities
+* Fill out the complete blueprint
+* Use the library to compile and run the architecture 
 
-##### Json creation
+### Deciding the type of architecture
 
-The Json will have 2 fields. Example given below.
-* path_config mentions the path to the prompts tools, tool_defs and agent cards
-* agent_config : defines the agents with available_agents indication what agents "host agent" can communicate with. If it is a single agent then single route orchestration else
-  llm decided multiple route orchestration
+This library supports two types of agentic architectures :
+* **Agentic** : This type of architecture gives autonomy to the agents. So given a problem, different agents communicate and assign tasks to other agents to solve a problem.
+* **Deterministic** : This type of architecture involves a controlled information flow between different agents as pre-planned by the user (Agent 1 -> Agent 2 ... Agent N).
+* **Hybrid** : A combination of both
 
+### Example JSON
 ```json
 {   "path_config" : {
-            "tools_path" : "tools.py",
             "prompts_path":"prompts.py",
-            "tool_definitions_path": "tool_defs.py",
-            "card_templates_path":"cards.py"
-    
-    },
+            "card_templates_path":"cards.py",
+            "utility_path":"utilities.py",
+            "type_of_architecture" : "deterministic",
+            "tools_path":"tools.py",
+            "tool_definitions_path":"tool_defs.py",
+            "notify_url_success_or_intermediate" : "<URL_TO_NOTIFY>",
+            "notify_url_failure" : "<URL_TO_NOTIFY>",
+            "key":"<YOUR_API_KEY>",
+            "route" : ["query_intent_agent","database_choice_agent","END"]
+       },
     "agent_config" :  [{
-            "agent_name": "host_agent",
+            "agent_name": "query_intent_agent",
             "version": "1.0.0",
-            "agent_details":"host_agent_card",
+            "agent_details":"query_intent_agent_card",
             "model_name":"openai/gpt-4.1",
             "reasoning":false,
             "base_url" : "https://openrouter.ai/api/v1",
-            "tools":["send_message","generate_metadata_for_all_artifacts"],
-            "tool_definitions":["send_message_definitions","metadata_all_artifacts"],
             "additional_args":{"parallel_tool_calls":false},
-            "system_instruction":"host_prompt_template_for_osm",
-            "available_agents":["planning_agent","address_agent","named_area_agent","buildings_agent","water_network_agent","land_features_agent","land_use_features_agent","plotting_agent","human_agent"]
+            "system_instruction":"query_intent_prompt",
+            "schema":"QueryIntentSchema"
+        },
+        {
+            "agent_name":"database_choice_agent",
+            "version":"1.0.0",
+            "agent_details":"database_choice_agent_card",
+            "model_name":"openai/gpt-4o",
+            "reasoning":false,
+            "base_url" : "https://openrouter.ai/api/v1",
+            "system_instruction":"database_choice_prompt",
+            "query_processing":"process_database_output",
+            "additional_args":{"parallel_tool_calls":false},
+            "schema":"DatabaseSchema"
+        },
+        {
+            "agent_name":"human_agent",
+            "version":"1.0.0",
+            "agent_details":"human_agent_card",
+            "tools":[],
+            "tool_definitions":[]
         }]
-}
-```
-#### Python Usage
 
-Finally the usage is simple and shown below.
+        }
+```
+
+### Running the config
 
 ```python
-from a2a_framework.utils.run_architecture import run_agent_architecture, run_human_reply
+from a2a_framework.utils.run_architecture import run_architecture,run_human_reply
 from a2a_framework.utils.initialise import initialize
 
-logger_path = initialize("agent_frameworks/a2a_async_test_1.json","a2a_test_log-1","a2a_test_logs",
-           "C:/Users/ab1574/OneDrive - University of Exeter/Desktop/Ordnance_Survey/osvenv/Scripts/python.exe")
-
-run_agent_architecture("Find all short buildings in Exeter which are less than 2 floors", "host_agent", logger_path)
+logger_path = initialize(r"<JSON_PATH>","<LOG_FILE_NAME>","<OUTPUT_DIR>", 1,
+           "<virtual environment path>")
 ```
 
-* In initialise you provide a path for the log file and output files and a path for the json so args are
-  * json path
-  * log file dir
-  * log file name
-* output or failure shown in output.md and failure.md in the log file dir.
 
